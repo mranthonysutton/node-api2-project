@@ -81,6 +81,7 @@ router.post("/", (req, res) => {
   }
 });
 
+// Posts a new comment to a specific blog post
 router.post("/:id/comments", (req, res) => {
   const { text, post_id } = req.body;
 
@@ -119,6 +120,36 @@ router.post("/:id/comments", (req, res) => {
         });
       });
   }
+});
+
+// Deletes a post based upon the id, but needs to return the deleted post object
+router.delete("/:id", (req, res) => {
+  // First need to grab the object that is passed from the ID
+  Posts.findById(req.params.id)
+    .then(post => {
+      // Checks if the post exists, and copies the information into a deletedPost object that we can return to the user. If the post id does not exists, returns an error message
+      if (post.length !== 0) {
+        const deletedPost = [...post];
+
+        // Deletes the post, and then logs the copiedData back to the client
+        Posts.remove(req.params.id)
+          .then(removed => {
+            res.status(200).json(deletedPost);
+          })
+          .catch(error => {
+            console.log(error);
+            res.status(500).json({ error: "The post could not be removed." });
+          });
+      } else {
+        res
+          .status(404)
+          .json({ message: "The post with the specified ID does not exist." });
+      }
+    })
+    .catch(error => {
+      console.log(error);
+      res.status(500).json({ error: "The post could not be removed." });
+    });
 });
 
 module.exports = router;
