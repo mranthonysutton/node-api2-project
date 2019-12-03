@@ -58,4 +58,67 @@ router.get("/:id/comments", (req, res) => {
     });
 });
 
+// Posts a new blog post
+router.post("/", (req, res) => {
+  const { title, contents } = req.body;
+
+  // Before the insert is ran, checks if title and contents is in the request
+  if (!title || !contents) {
+    res.status(400).json({
+      errorMessage: "Please provide title and contents for the post."
+    });
+  } else {
+    Posts.insert(req.body)
+      .then(post => {
+        res.status(201).json({ ...post, ...req.body });
+      })
+      .catch(error => {
+        console.log(error);
+        res.status(500).json({
+          error: "There was an error while saving the post to the database."
+        });
+      });
+  }
+});
+
+router.post("/:id/comments", (req, res) => {
+  const { text, post_id } = req.body;
+
+  // Checks if the client has passed in text
+  if (!text) {
+    res
+      .status(400)
+      .json({ errorMessage: "Please provide text for the comment." });
+  } else {
+    // If texts exists, take the :id that has been passed in, and attempt to locate any posts, if the posts exists, then we can insert the comment into that post, else, returns an error
+    Posts.findById(req.params.id)
+      .then(post => {
+        if (post.length !== 0) {
+          // Inserts the comment into the post, and appends the passed in body
+          Posts.insertComment(req.body)
+            .then(comment => {
+              res.status(201).json({ ...comment, ...req.body });
+            })
+            .catch(error => {
+              console.log(error);
+              res.status(500).json({
+                error:
+                  "There was an error while saving the comment to the database"
+              });
+            });
+        } else {
+          res.status(404).json({
+            message: "The post with the specified ID does not exist."
+          });
+        }
+      })
+      .catch(error => {
+        console.log(error);
+        res.status(500).json({
+          error: "There was an error while saving the comment to the database"
+        });
+      });
+  }
+});
+
 module.exports = router;
