@@ -152,4 +152,48 @@ router.delete("/:id", (req, res) => {
     });
 });
 
+router.put("/:id", (req, res) => {
+  const { title, contents } = req.body;
+
+  if (!title || !contents) {
+    res.status(400).json({
+      errorMessage: "Please provide title and contents for the post."
+    });
+  } else {
+    Posts.findById(req.params.id)
+      .then(response => {
+        // Checks if the response we get back is empty or not
+        if (response.length !== 0) {
+          Posts.update(req.params.id, req.body)
+            .then(updatedPost => {
+              res.status(200).json({ ...updatedPost, ...req.body });
+            })
+            .catch(error => {
+              console.log(error);
+              res
+                .status(500)
+                .json({ error: "The post information could not be modified." });
+            });
+        } else {
+          res.status(404).json({
+            message: "The post with the specified ID does not exist."
+          });
+        }
+      })
+      .catch(error => {
+        console.log(error);
+        res
+          .status(500)
+          .json({ error: "The post information could not be modified." });
+      });
+  }
+
+  // Posts.update(req.params.id, changes)
+  // .then(updatedPost => {})
+  // .catch(error => {
+  //     console.log(error);
+  //     res.status(500).json({error: "The post information could not be modified."})
+  // });
+});
+
 module.exports = router;
